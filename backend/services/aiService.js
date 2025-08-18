@@ -1,19 +1,28 @@
-const { exec } = require('child_process');
+const fetch = require("node-fetch");
 
 /**
- * Run a local Ollama model with a prompt
+ * Call local Ollama API with a prompt
  * @param {string} model - model name (e.g. "codellama", "llama3")
  * @param {string} prompt - user question/code context
  * @returns {Promise<string>}
  */
-function runOllama(model, prompt) {
-  return new Promise((resolve, reject) => {
-    exec(`echo "${prompt}" | ollama run ${model}`, (error, stdout, stderr) => {
-      if (error) return reject(error);
-      if (stderr) return reject(stderr);
-      resolve(stdout.trim());
-    });
+async function runOllama(model, prompt) {
+  const response = await fetch("http://localhost:11434/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: model,
+      prompt: prompt,
+      stream: false,
+    }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Ollama API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.response;
 }
 
 module.exports = { runOllama };
