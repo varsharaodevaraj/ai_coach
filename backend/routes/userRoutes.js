@@ -1,23 +1,3 @@
-// const express = require('express');
-// const { registerUser, loginUser } = require('../controllers/userController');
-
-// const router = express.Router();
-
-// router.post('/register', registerUser);
-// router.post('/login', loginUser);
-
-// module.exports = router;
-
-// const express = require('express');
-// const { createUser, getUser } = require('../controllers/userController');
-
-// const router = express.Router();
-
-// router.post('/', createUser);  // this must match the exported name
-// router.get('/:email', getUser);
-
-// module.exports = router;
-
 const express = require('express');
 const { getHintsForAttempt } = require('../controllers/hintController');
 const { createUser, loginUser, getUser } = require('../controllers/userController');

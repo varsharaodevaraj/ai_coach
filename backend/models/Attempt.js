@@ -14,8 +14,8 @@ const attemptSchema = new mongoose.Schema({
   hintHistory: [hintSchema],
   status: { type: String, enum: ['in-progress', 'solved', 'unsolved'], default: 'in-progress' },
   startTime: { type: Date, default: Date.now },
-  needsRevision: { type: Boolean, default: false }, // ✅ for daily reminders
-  reminderSent: { type: Boolean, default: false },  // ✅ to avoid duplicate emails
+  needsRevision: { type: Boolean, default: false }, //  for daily reminders
+  reminderSent: { type: Boolean, default: false },  //  to avoid duplicate emails
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   feedback: { type: String, default: "" }, // AI feedback / improvement suggestions

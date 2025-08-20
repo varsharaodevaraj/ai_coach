@@ -15,8 +15,8 @@ const problemSchema = new mongoose.Schema({
   },
   platform: { type: String }, // e.g., "LeetCode"
   tags: [String],
-  testCases: [testCaseSchema], // ✅ add test cases
-  optimalSolution: { type: String }, // ✅ store reference optimal code/approach
+  testCases: [testCaseSchema], //  add test cases
+  optimalSolution: { type: String }, //  store reference optimal code/approach
   createdAt: { type: Date, default: Date.now },
 });
 

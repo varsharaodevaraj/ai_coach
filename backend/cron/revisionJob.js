@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const Attempt = require('../models/Attempt');
 const { sendReminderMail } = require('../utils/mailer');
 
-// ✅ Every day at 8 AM
+// Every day at 8 AM
 cron.schedule('0 8 * * *', async () => {
   console.log('Running daily revision reminder job...');
 
@@ -16,7 +16,7 @@ cron.schedule('0 8 * * *', async () => {
   const yesterdayEnd = new Date(today);
 
   try {
-    // 🔎 Find yesterday’s attempts that still need revision
+    // Find yesterday’s attempts that still need revision
     const attempts = await Attempt.find({
       needsRevision: true,
       reminderSent: { $ne: true }, // avoid spamming
@@ -29,7 +29,7 @@ cron.schedule('0 8 * * *', async () => {
       return;
     }
 
-    // 👥 Group attempts by user
+    // Group attempts by user
     const userMap = {};
     attempts.forEach(a => {
       if (!userMap[a.userId._id]) {
@@ -42,20 +42,20 @@ cron.schedule('0 8 * * *', async () => {
       userMap[a.userId._id].problems.push(a.problemId.title);
     });
 
-    // 📩 Send reminder mail to each user
+    // Send reminder mail to each user
     for (const userId in userMap) {
       const { email, name, problems } = userMap[userId];
 
       await sendReminderMail(
         email,
-        "⏰ Time to Revise!",
+        "Time to Revise!",
         `Hi ${name},\n\nYou need to revise these problems today:\n\n- ${problems.join("\n- ")}\n\nGood luck 🚀`
       );
 
       console.log(`📩 Sent reminder to ${email}`);
     }
 
-    // ✅ Mark reminders as sent
+    // Mark reminders as sent
     await Attempt.updateMany(
       { _id: { $in: attempts.map(a => a._id) } },
       { $set: { reminderSent: true } }

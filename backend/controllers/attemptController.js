@@ -26,7 +26,7 @@ async function updateAttempt(req, res, next) {
 
     const update = { timeSpent, code, usedHints, status };
 
-    // ✅ flag revision if needed
+    // flag revision if needed
     if ((timeSpent && timeSpent >= 25) || usedHints === true) {
       update.needsRevision = true;
     }
