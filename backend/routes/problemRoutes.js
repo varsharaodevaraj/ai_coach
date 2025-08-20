@@ -15,7 +15,7 @@ router.post('/', addProblem);
 router.get('/', getProblems);
 
 // ✅ GET /problems/similar/:problemId → get similar problems
-router.get('/similar/:problemId', getSimilarProblems);
+router.get('/:problemId/similar', getSimilarProblems);
 
 
 // GET /problems/:id → get single problem

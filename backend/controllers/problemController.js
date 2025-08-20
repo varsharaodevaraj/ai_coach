@@ -41,25 +41,22 @@ async function getProblemById(req, res, next) {
   }
 }
 
-// ✅ New: Get similar problems
-// @desc Get similar problems based on tags & difficulty
-// @route GET /problems/similar/:problemId
+// @desc Recommend similar problems by tags/difficulty
+// @route GET /problems/:problemId/similar
 async function getSimilarProblems(req, res, next) {
   try {
     const { problemId } = req.params;
+    const baseProblem = await Problem.findById(problemId);
+    if (!baseProblem) return res.status(404).json({ error: 'Problem not found' });
 
-    const currentProblem = await Problem.findById(problemId);
-    if (!currentProblem) return res.status(404).json({ error: 'Problem not found' });
-
+    // Find problems with at least one matching tag and same difficulty, excluding the original
     const similar = await Problem.find({
       _id: { $ne: problemId },
-      $or: [
-        { difficulty: currentProblem.difficulty },
-        { tags: { $in: currentProblem.tags } }
-      ]
+      difficulty: baseProblem.difficulty,
+      tags: { $in: baseProblem.tags }
     }).limit(5);
 
-    res.json({ similar });
+    res.json({ similarProblems: similar });
   } catch (err) {
     next(err);
   }

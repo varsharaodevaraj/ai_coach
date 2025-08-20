@@ -24,7 +24,7 @@ const createUser = async (req, res) => {
     res.status(201).json({
       message: 'User created',
       user: {
-        _id: user._id, // <-- add this line
+        _id: user._id,
         name: user.name,
         email: user.email,
         streak: user.streak

@@ -62,24 +62,8 @@ async function getAttemptsByUser(req, res, next) {
 async function getRevisionAttempts(req, res, next) {
   try {
     const { userId } = req.params;
-
-    // yesterday range
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const yesterdayStart = new Date(today);
-    yesterdayStart.setDate(today.getDate() - 1);
-
-    const yesterdayEnd = new Date(today);
-
-    const attempts = await Attempt.find({
-      userId,
-      needsRevision: true,             // ✅ much simpler now
-      status: { $ne: 'solved' },
-      createdAt: { $gte: yesterdayStart, $lt: yesterdayEnd }
-    }).populate('problemId', 'title difficulty platform tags');
-
-    res.json({ attempts });
+    const attempts = await Attempt.find({ userId, needsRevision: true }).populate('problemId', 'title');
+    res.json({ revisionAttempts: attempts });
   } catch (err) {
     next(err);
   }
@@ -123,32 +107,42 @@ async function submitAttempt(req, res, next) {
 async function getUserAnalytics(req, res, next) {
   try {
     const { userId } = req.params;
-    const attempts = await Attempt.find({ userId }).populate('problemId', 'difficulty tags createdAt');
+    const attempts = await Attempt.find({ userId }).populate('problemId', 'difficulty tags');
 
-    // Example analytics: problems solved per day, avg time, topic breakdown
+    // Skill mastery: count solved attempts per tag
+    const topicStats = {};
     const solvedAttempts = attempts.filter(a => a.status === 'solved');
-    const problemsPerDay = {};
-    const topicCount = {};
-    let totalTime = 0;
 
     solvedAttempts.forEach(a => {
-      const day = a.createdAt.toISOString().slice(0, 10);
-      problemsPerDay[day] = (problemsPerDay[day] || 0) + 1;
-      totalTime += a.timeSpent || 0;
       if (a.problemId.tags) {
         a.problemId.tags.forEach(tag => {
-          topicCount[tag] = (topicCount[tag] || 0) + 1;
+          topicStats[tag] = (topicStats[tag] || 0) + 1;
         });
       }
     });
 
-    const avgTime = solvedAttempts.length ? (totalTime / solvedAttempts.length) : 0;
+    // Calculate mastery percentage (solved / total for each tag)
+    const allProblems = await Problem.find({});
+    const tagTotals = {};
+    allProblems.forEach(p => {
+      if (p.tags) {
+        p.tags.forEach(tag => {
+          tagTotals[tag] = (tagTotals[tag] || 0) + 1;
+        });
+      }
+    });
+
+    const skillHeatMap = {};
+    Object.keys(tagTotals).forEach(tag => {
+      const solved = topicStats[tag] || 0;
+      skillHeatMap[tag] = Math.round((solved / tagTotals[tag]) * 100); // percentage
+    });
 
     res.json({
       solvedCount: solvedAttempts.length,
-      problemsPerDay,
-      avgTime,
-      topicCount
+      skillHeatMap, // mastery % by topic
+      topicStats,   // raw solved count by topic
+      tagTotals     // total problems by topic
     });
   } catch (err) {
     next(err);
