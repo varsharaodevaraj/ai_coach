@@ -1,5 +1,10 @@
 const express = require('express');
-const { addProblem, getProblems, getProblemById } = require('../controllers/problemController');
+const {
+  addProblem,
+  getProblems,
+  getProblemById,
+  getSimilarProblems
+} = require('../controllers/problemController');
 
 const router = express.Router();
 
@@ -9,7 +14,13 @@ router.post('/', addProblem);
 // GET /problems → get all problems
 router.get('/', getProblems);
 
+// ✅ GET /problems/similar/:problemId → get similar problems
+router.get('/similar/:problemId', getSimilarProblems);
+
+
 // GET /problems/:id → get single problem
 router.get('/:id', getProblemById);
+
+
 
 module.exports = router;

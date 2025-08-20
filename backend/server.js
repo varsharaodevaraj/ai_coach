@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
+require('./cron/revisionJob');
 
 dotenv.config();
 
@@ -28,13 +29,13 @@ app.get('/health', (_req, res) => {
   });
 });
 
-
 // --- (placeholder) API mount points — we’ll add files later
 // app.use('/auth', require('./routes/authRoutes'));
 app.use('/problems', require('./routes/problemRoutes'));
 app.use('/attempts', require('./routes/attemptRoutes'));
 app.use('/hints', require('./routes/hintRoutes'));
 app.use('/code', require('./routes/codeRoutes'));
+app.use('/user', require('./routes/userRoutes'));
 // app.use('/assist', require('./routes/assistRoutes'));
 // app.use('/analytics', require('./routes/analyticsRoutes'));
 

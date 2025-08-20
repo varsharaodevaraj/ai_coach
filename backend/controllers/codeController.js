@@ -1,31 +1,51 @@
 const { runOllama } = require('../services/aiService');
+const Attempt = require('../models/Attempt');
 
-// @desc Ask AI about code step by step
-// @route POST /code/help
-async function codeHelp(req, res, next) {
+const codeHelp = async (req, res, next) => {
   try {
-    const { code, question, revealSolution } = req.body;
+    const { userId, problemId, code, question } = req.body;
 
-    if (!code || !question) {
-      return res.status(400).json({ error: 'Code and question are required' });
+    if (!userId || !problemId || !code || !question) {
+      return res.status(400).json({ error: 'userId, problemId, code, and question are required' });
     }
 
-    let prompt;
-    if (revealSolution) {
-      // user explicitly asked for full solution
-      prompt = `The user wrote this code:\n${code}\nThey now want the full correct solution. Provide the full working corrected code.`;
-    } else {
-      // step-by-step guidance mode
-      prompt = `The user wrote this code:\n${code}\nThey asked: ${question}\n
-      Please respond step by step, guiding them without directly giving the final full solution unless they ask explicitly.`;
+    // Find or create attempt
+    let attempt = await Attempt.findOne({ userId, problemId });
+    if (!attempt) {
+      attempt = await Attempt.create({ userId, problemId, code });
     }
 
-    const response = await runOllama("codellama", prompt);
+    const now = new Date();
+    const elapsedMinutes = (now - attempt.startTime) / 1000 / 60;
 
-    res.json({ response });
+    if (elapsedMinutes < 15) {
+      return res.json({
+        message: `Please try on your own for ${Math.ceil(15 - elapsedMinutes)} more minutes before asking a hint.`
+      });
+    }
+
+    // Run AI to generate hint
+    const aiHint = await runOllama(
+      'codellama',
+      `User code:\n${code}\nQuestion:\n${question}`
+    );
+
+    // Store hint in attempt
+    attempt.hintHistory.push({ hintText: aiHint });
+    attempt.code = code;
+    attempt.usedHints = true;
+    await attempt.save();
+
+    res.json({
+      response: aiHint,
+      attemptId: attempt._id,
+      totalHintsUsed: attempt.hintHistory.length
+    });
+
   } catch (err) {
+    console.error(err);
     next(err);
   }
-}
+};
 
 module.exports = { codeHelp };

@@ -4,13 +4,14 @@ const Problem = require('../models/Problem');
 // @route POST /problems
 async function addProblem(req, res, next) {
   try {
-    const { title, platform, difficulty, tags, link } = req.body;
+    console.log("REQ BODY RECEIVED:", req.body);
+    const { title, description, platform, difficulty, tags, link } = req.body;
 
     if (!title || !difficulty) {
       return res.status(400).json({ error: 'Title and difficulty are required' });
     }
 
-    const problem = await Problem.create({ title, platform, difficulty, tags, link });
+    const problem = await Problem.create({ title, description, platform, difficulty, tags, link });
     res.status(201).json(problem);
   } catch (err) {
     next(err);
@@ -40,4 +41,28 @@ async function getProblemById(req, res, next) {
   }
 }
 
-module.exports = { addProblem, getProblems, getProblemById };
+// ✅ New: Get similar problems
+// @desc Get similar problems based on tags & difficulty
+// @route GET /problems/similar/:problemId
+async function getSimilarProblems(req, res, next) {
+  try {
+    const { problemId } = req.params;
+
+    const currentProblem = await Problem.findById(problemId);
+    if (!currentProblem) return res.status(404).json({ error: 'Problem not found' });
+
+    const similar = await Problem.find({
+      _id: { $ne: problemId },
+      $or: [
+        { difficulty: currentProblem.difficulty },
+        { tags: { $in: currentProblem.tags } }
+      ]
+    }).limit(5);
+
+    res.json({ similar });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { addProblem, getProblems, getProblemById, getSimilarProblems };

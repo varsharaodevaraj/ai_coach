@@ -11,7 +11,7 @@ const hintSchema = new mongoose.Schema({
     required: true
   },
   level: {
-    type: Number, // 1,2,3 (progressive hints if we want later)
+    type: Number, // 1,2,3 (progressive hints if needed later)
     default: 1
   },
   createdAt: {

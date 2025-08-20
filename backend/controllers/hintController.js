@@ -1,34 +1,33 @@
 const Attempt = require('../models/Attempt');
 const Hint = require('../models/Hint');
 
-// @desc Get available hints for an attempt (time based)
-// @route GET /hints/:attemptId
-async function getHints(req, res, next) {
+// @desc Get progressive hints for an attempt
+// @route GET /hints/attempt/:attemptId
+async function getHintsForAttempt(req, res, next) {
   try {
-    const attempt = await Attempt.findById(req.params.attemptId).populate('problemId');
+    const { attemptId } = req.params;
+    const attempt = await Attempt.findById(attemptId);
     if (!attempt) return res.status(404).json({ error: 'Attempt not found' });
 
-    // check if 15 mins have passed
+    // Find all hints for the problem
+    const hints = await Hint.find({ problemId: attempt.problemId }).sort({ level: 1 });
+
+    // Calculate time spent
     const now = new Date();
-    const diffMins = Math.floor((now - attempt.createdAt) / (1000 * 60));
+    const minutesSpent = Math.floor((now - attempt.createdAt) / 60000);
 
-    if (diffMins < 15) {
-      return res.json({
-        available: false,
-        message: `Hints unlock after 15 minutes. You have ${15 - diffMins} mins left.`
-      });
-    }
+    // Progressive unlock logic
+    let unlockedLevel = 1;
+    if (minutesSpent >= 10) unlockedLevel = 2;
+    if (minutesSpent >= 20) unlockedLevel = 3;
 
-    // fetch stored hints (later can integrate AI if none)
-    const hints = await Hint.find({ problemId: attempt.problemId._id }).sort({ level: 1 });
+    // Filter hints by unlocked level
+    const unlockedHints = hints.filter(h => h.level <= unlockedLevel);
 
-    res.json({
-      available: true,
-      hints
-    });
+    res.json({ unlockedHints, minutesSpent });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { getHints };
+module.exports = { getHintsForAttempt };
